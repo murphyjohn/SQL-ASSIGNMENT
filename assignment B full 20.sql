@@ -222,6 +222,8 @@ SELECT * FROM INFORMATION_SCHEMA.COLUMNS
 
 where TABLE_NAME = 'Departments'
 
+sp_help Departments
+
 
 
 --Request 17
