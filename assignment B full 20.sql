@@ -11,11 +11,11 @@ where Last_Name like 'M%'
 --representatives who were hired on or after 24 Mar 1998 sorted in ascending order of last name.
 use CGDatabase
 select Department_No, First_Name, Last_Name, Phone_Number 
-from employees
-where Hire_Date > '1998-03-23'
-and Department_No = 60
+from employees e, Jobs j
+where e.Job_ID = j.Job_ID
+and Hire_Date > '1998-03-23'
+and Job_Title = 'Sales Representative'
 order by Last_Name ASC
-
 
 --Request 3
 --List all the data for all jobs where the minimum salary is less than or 
