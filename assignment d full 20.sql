@@ -58,16 +58,12 @@ order by Commission_Percent DESC
 --Request 5
 --Which jobs are found in the Administration and Human Resources departments?
 
-select distinct Job_Title
-from Jobs j , Employees e, Departments d
-where 
-	j.Job_ID=e.Job_ID
-	AND
-		e.Department_No = d.Department_No
-	and
-		(Department_Name = 'Administration'
-		or
-		Department_Name = 'Human Resources')
+use CGdatabase
+select distinct Job_Title from Jobs j, Departments d, Employees e
+where j.Job_ID = e.Job_ID
+and e.Department_No = d.Department_No
+and d.Department_Name <> 'Administration' 
+and d.Department_Name <> 'Human Resources'
 
 
 
@@ -77,20 +73,11 @@ where
 --together with their monthly salaries (rounded to 2 decimal places), 
 --sorted in ascending order of last name.
 
-select 
-	--Last_Name, CAST((ROUND((Annual_Salary/12),2)) as money) as Monthly_Salary
-	Last_Name, (ROUND((Annual_Salary/12),2)) as Monthly_Salary
-from 
-	Employees e, Departments d
-where
-		e.Department_No=d.Department_No
-	and(
-		Department_Name='Marketing'
-		or
-		Department_Name='Sales'
-	  )
-order by Last_Name ASC
-
+use CGdatabase
+select Last_Name, CAST(ROUND(Annual_Salary/12,2) AS MONEY) as Monthly_Salary 
+from Employees e, Departments d
+where e.Department_No = d.Department_No
+and (d.Department_Name='Marketing' or d.Department_Name = 'Sales')
 
 
 --Request 7
@@ -138,10 +125,7 @@ order by Last_Name
 --the department with the highest average salary.
 
 select TOP 1
-	Department_No, 
-	Annual_Salary as Highest_Salary
-
-from Employees e
+	Department_No, Annual_Salary as Highest_Salary from Employees e
 Group by E.Department_No, e.Annual_Salary
 order by AVG(Annual_Salary) Desc
 
@@ -151,14 +135,15 @@ order by AVG(Annual_Salary) Desc
 --List the department number and name for all departments 
 --where no marketing representatives work.
 
-select distinct d.Department_Name, d.Department_No
-from Departments d, Employees e
-Group by d.Department_No, d.Department_Name
-except 
-	(select distinct d.Department_Name,e.Department_No 
-		from Departments d, Employees e, Jobs j
-		where j.Job_ID = e.Job_ID
-		and Job_Title = 'Marketing Representative')
+use CGdatabase
+select distinct Department_Name, d.Department_No from Departments d, jobs j, Employees e
+where d.Department_No = e.Department_No
+and j.Job_ID = e.Job_ID
+and d.Department_No not in (
+	select d.Department_No from Departments d, jobs j, Employees e
+	where d.Department_No = e.Department_No
+	and j.Job_ID = e.Job_ID
+	and Job_Title = 'Marketing Representative')
 
 
 --Request 12
@@ -193,29 +178,29 @@ order by Max_Salary ASC
 --employees in departments 20 and 190 are given a 12% rise and 
 --employees in other departments are not given a rise.
 
-select 
-	Department_No,
-	Employee_No, 
-	Annual_Salary Old_Salary,
+use CGdatabase
+select e.Employee_No, Annual_Salary as Old_Salary,
 	case
-		when Department_No in (80, 90) then Annual_Salary*1.06
-		when Department_No in (20, 190) then Annual_Salary*1.12
+		when e.Department_No in (80,90) 
+		then Annual_Salary*1.06 
+		when e.Department_No in (20,190)
+		then Annual_Salary*1.12
 		else Annual_Salary
-	end 
+	end
 	as New_Salary,
-	case
-		when Department_No in (80, 90) then '6%'
-		when Department_No in (20, 190) then '12%'
+	case 
+		when e.Department_No in (80,90) 
+		then '6%' 
+		when e.Department_No in (20,190)
+		then '12%'
 		else '0%'
-	end as 
-	Percentage_Raise
-
-from Employees
-order by Department_No
+	end
+	as Percentage_Raise
+from Employees e, Departments d
 
 
 --Request 17
---Create a new view for manager’s details only using 
+--Create a new view for managerâ€™s details only using 
 --all the fields from the employee table.
 --Show all the fields and all the managers using the view for managers.
 
@@ -227,10 +212,10 @@ select * from ManagerDetails
 
 
 --Request 18
---a) Drop the manager’s view.
---b) Recreate the manager’s view so that the 
+--a) Drop the managerâ€™s view.
+--b) Recreate the managerâ€™s view so that the 
 --salary field is no longer included.
---c) Use the ALTER statement to compile the manager’s view.
+--c) Use the ALTER statement to compile the managerâ€™s view.
 
 --a)
 Drop view Manager_Details
@@ -278,32 +263,9 @@ select * from Manager_Details
 --Request 20
 --Print a copy of the data dictionary entry for the table employees
 
+
 USE CGDatabase
--- =============================================
--- Author:JOHIR
--- Create date: 01/12/2012
--- Description:	GENERATE DATA DICTIONARY FROM SQL SERVER
--- =============================================
+select * from INFORMATION_SCHEMA.COLUMNS
+where TABLE_NAME = 'Employees'
 
-BEGIN
-
-select a.name [Table],b.name [Attribute],c.name [DataType],b.isnullable [Allow Nulls?],CASE WHEN 
-d.name is null THEN 0 ELSE 1 END [PKey?],
-CASE WHEN e.parent_object_id is null THEN 0 ELSE 1 END [FKey?],CASE WHEN e.parent_object_id 
-is null THEN '-' ELSE g.name  END [Ref Table],
-CASE WHEN h.value is null THEN '-' ELSE h.value END [Description]
-from sysobjects as a
-join syscolumns as b on a.id = b.id
-join systypes as c on b.xtype = c.xtype 
-left join (SELECT  so.id,sc.colid,sc.name 
-      FROM    syscolumns sc
-      JOIN sysobjects so ON so.id = sc.id
-      JOIN sysindexkeys si ON so.id = si.id 
-                    and sc.colid = si.colid
-      WHERE si.indid = 1) d on a.id = d.id and b.colid = d.colid
-left join sys.foreign_key_columns as e on a.id = e.parent_object_id and b.colid = e.parent_column_id    
-left join sys.objects as g on e.referenced_object_id = g.object_id  
-left join sys.extended_properties as h on a.id = h.major_id and b.colid = h.minor_id
-where a.type = 'U' order by a.name
-
-END
+sp_help Employees
