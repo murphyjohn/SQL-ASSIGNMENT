@@ -17,6 +17,7 @@ and Hire_Date > '1998-03-23'
 and Job_Title = 'Sales Representative'
 order by Last_Name ASC
 
+
 --Request 3
 --List all the data for all jobs where the minimum salary is less than or 
 --equal to 4500 sorted in descending order of the minimum salary.
@@ -28,11 +29,12 @@ order by Min_Salary DESC
 
 --Request 4
 --Which jobs are found in the Marketing and Accounting departments?
-use CGDatabase
-select Employees.Job_ID, Jobs.Job_Title from Employees
-join Jobs on Jobs.Job_ID = Employees.Job_ID
-where Department_No = 10 
-or Department_No = 30
+use CGdatabase
+
+select Job_Title from Jobs j, Employees e, Departments d
+where j.Job_ID = e.Job_ID
+and d.Department_No = e.Department_No
+and (Department_Name = 'Marketing' or Department_Name = 'Accounting')
 
 
 --Request 5
@@ -164,7 +166,15 @@ where Department_Name <> 'Sales'
 
 group by Departments.Department_No, Department_Name
 
-
+--Request 11 Proper Method.
+select distinct d.Department_Name, d.Department_No from Departments d, Jobs j, Employees e
+where d.Department_No = e.Department_No
+and j.Job_ID = e.Job_ID
+and d.Department_No NOT IN(
+	Select d.Department_No from Departments d, Jobs j, Employees e
+	where d.Department_No = e.Department_No
+	and j.Job_ID = e.Job_ID 
+	and job_title = 'Sales Representative')
 
 
 --Request 12
