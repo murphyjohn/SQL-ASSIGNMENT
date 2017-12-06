@@ -180,7 +180,7 @@ from Employees
 order by Department_No
 
 --Request 17
---Create a new view for manager’s details only using all the fields from the
+--Create a new view for managerâ€™s details only using all the fields from the
 --employee table. Apply a CHECK constraint.
 
 create view Manager_Details as
@@ -213,9 +213,3 @@ grant select on Manager_Details to public
 --locations table.
 --Provide a printout showing that the index has been created.
 create index LOC_POSTALCODE on Locations(Postal_Code)
-
-
-
-
-
-
